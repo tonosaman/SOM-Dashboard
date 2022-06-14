@@ -434,11 +434,11 @@ callback = curdoc().add_periodic_callback(update, interval * 1000)
 ##### Application Cockpit Tab ####################
 ##################################################
 
-xlnxcnf_ver = subprocess.getoutput("snap info xlnx-config 2>/dev/null | sed -n \"s/^installed: *\([^ ]\+\).*/\1/p\"")
-xmutil = "xmutil" if xlnxcnf_ver == "" else "xlnx-config.xmutil"
+xlnx_config_version = subprocess.getoutput("snap info xlnx-config 2>/dev/null | sed -n \"s/^installed: *\([^ ]\+\).*/\1/p\"")
+xlnx_config_prefix = "" if xlnx_config_version == "" else "xlnx-config."
 
 ## determine OS and CC
-cc = subprocess.getoutput("sudo " + xmutil + " boardid | grep \"product\"")
+cc = subprocess.getoutput("sudo " + xlnx_config_prefix + "xmutil boardid | grep \"product\"")
 if "KR" in cc and "26" in cc:
     cc = "KR260"
 elif "KV" in cc and "26" in cc:
@@ -467,7 +467,7 @@ title2 = Div(
 def xmutil_unloadapp():
     if current_command:
         terminate_app()
-    subprocess.run(["sudo", xmutil, "unloadapp"])
+    subprocess.run(["sudo", xlnx_config_prefix + xmutil, "unloadapp"])
     draw_apps()
     # draw_app_run_buttons()
     layout2.children[4] = column(load_buttons, margin=(0, 0, 0, 50))
@@ -485,7 +485,7 @@ def xmutil_loadapp(app_name):
         platformstats.deinit()
         print("\nERROR: unexpected command:", current_command, "\n")
         exit()
-    command = str('sudo ' + xmutil + ' loadapp ' + app_name)
+    command = str('sudo ' + xlnx_config_prefix + 'xmutil loadapp ' + app_name)
     subprocess.run(command, shell=True, capture_output=True)
     draw_apps()
     # draw_app_run_buttons()
@@ -507,7 +507,7 @@ def draw_apps():
     global active_app
     active_app = "None"
 
-    listapp_output = subprocess.run(['sudo dfx-mgr-client -listPackage'], shell=True,
+    listapp_output = subprocess.run(['sudo ' + xlnx_config_prefix + 'dfx-mgr-client -listPackage'], shell=True,
                                     stdout=subprocess.PIPE).stdout.decode("utf-8")
 
     listapp = listapp_output.split("\n")
@@ -539,8 +539,8 @@ def draw_apps():
 
 
 app_print = Div(
-    text="""<h2 style="color :""" + text_color + """; text-align :left">Available Accelerated Applications on 
-     target to load</h2><h4 style="color :""" + text_color + """; text-align :left">&emsp;&emsp;Blue - click 
+    text="""<h2 style="color :""" + text_color + """; text-align :left">Available Accelerated Applications on
+     target to load</h2><h4 style="color :""" + text_color + """; text-align :left">&emsp;&emsp;Blue - click
     to load, Green - Loaded Accelerator, White - available to load after unloading</h4>""", width=1600)
 draw_apps()
 current_command = None
@@ -589,7 +589,7 @@ def run_app(run_command):
 # packages!!###########################################################################################################
 
 package_print = Div(
-    text="""<h2 style="color :""" + text_color + """; text-align :center">Available Accelerated Application 
+    text="""<h2 style="color :""" + text_color + """; text-align :center">Available Accelerated Application
     Packages, click button below to download and install the chosen package</h2>""", width=1600)
 
 
@@ -620,7 +620,7 @@ def draw_pkgs():
     if "ubuntu" in os:
         temp_cmd = str("apt-cache search " + cc)
     elif "petalinux" in os:
-        temp_cmd = str("sudo " + xmutil + " getpkgs | grep packagegroup-" + cc)
+        temp_cmd = str("sudo " + xlnx_config_prefix + "xmutil getpkgs | grep packagegroup-" + cc)
 
     else:
         platformstats.deinit()
@@ -640,7 +640,7 @@ def draw_pkgs():
 draw_pkgs()
 
 app_print2 = Div(
-    text="""<h3 style="color :""" + text_color + """; text-align :center">To execute application, use command 
+    text="""<h3 style="color :""" + text_color + """; text-align :center">To execute application, use command
     line or start Jupyter lab and use Jupyter notebooks. </h3>""", width=1600)
 
 layout2 = layout([
